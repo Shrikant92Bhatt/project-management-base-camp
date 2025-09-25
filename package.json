@@ -1,0 +1,9 @@
+{
+  "name": "project-camp",
+  "version": "1.0.0",
+  "description": "Project managment application for beginer ",
+  "main": "index.js",
+  "repository": "origin https://github.com/Shrikant92Bhatt/project-management-base-camp.git",
+  "author": "Shrikant Bhatt",
+  "license": "MIT"
+}
