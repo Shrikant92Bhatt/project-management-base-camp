@@ -34,11 +34,11 @@ Project Camp Backend enables teams to organize projects, manage tasks with subta
 
 ## User Roles
 
-| Role | Permissions |
-|------|-------------|
-| Admin | Full system access, project management, team management |
-| Project Admin | Project-level administrative access, task management |
-| Member | View projects, update task completion status |
+| Role          | Permissions                                             |
+| ------------- | ------------------------------------------------------- |
+| Admin         | Full system access, project management, team management |
+| Project Admin | Project-level administrative access, task management    |
+| Member        | View projects, update task completion status            |
 
 ## Security Features
 
@@ -59,17 +59,20 @@ Project Camp Backend enables teams to organize projects, manage tasks with subta
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/Shrikant92Bhatt/project-management-base-camp.git
    cd project-camp
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Environment Setup**
+
    ```bash
    # Copy environment template
    cp .env.example .env
@@ -79,21 +82,25 @@ Project Camp Backend enables teams to organize projects, manage tasks with subta
 4. **Development Commands**
 
    **Start development server (with hot reload)**
+
    ```bash
    npm run dev
    ```
 
    **Build TypeScript to JavaScript**
+
    ```bash
    npm run build
    ```
 
    **Start production server**
+
    ```bash
    npm start
    ```
 
    **TypeScript compilation**
+
    ```bash
    npx tsc
    ```
