@@ -9,20 +9,20 @@ Project Camp Backend enables teams to organize projects, manage tasks with subta
 ## Key Features
 
 - **User Authentication & Authorization**
-  - JWT-based authentication with refresh tokens
-  - Email verification and password reset
-  - Role-based access control (Admin, Project Admin, Member)
+    - JWT-based authentication with refresh tokens
+    - Email verification and password reset
+    - Role-based access control (Admin, Project Admin, Member)
 
 - **Project Management**
-  - Create, update, and delete projects
-  - Team member management with role assignment
-  - Project notes system
+    - Create, update, and delete projects
+    - Team member management with role assignment
+    - Project notes system
 
 - **Task Management**
-  - Create and manage tasks with subtasks
-  - File attachments support
-  - Three-state status tracking (Todo, In Progress, Done)
-  - Task assignment to team members
+    - Create and manage tasks with subtasks
+    - File attachments support
+    - Three-state status tracking (Todo, In Progress, Done)
+    - Task assignment to team members
 
 ## API Structure
 
@@ -60,50 +60,50 @@ Project Camp Backend enables teams to organize projects, manage tasks with subta
 
 1. **Clone the repository**
 
-   ```bash
-   git clone https://github.com/Shrikant92Bhatt/project-management-base-camp.git
-   cd project-camp
-   ```
+    ```bash
+    git clone https://github.com/Shrikant92Bhatt/project-management-base-camp.git
+    cd project-camp
+    ```
 
 2. **Install dependencies**
 
-   ```bash
-   npm install
-   ```
+    ```bash
+    npm install
+    ```
 
 3. **Environment Setup**
 
-   ```bash
-   # Copy environment template
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
+    ```bash
+    # Copy environment template
+    cp .env.example .env
+    # Edit .env with your configuration
+    ```
 
 4. **Development Commands**
 
-   **Start development server (with hot reload)**
+    **Start development server (with hot reload)**
 
-   ```bash
-   npm run dev
-   ```
+    ```bash
+    npm run dev
+    ```
 
-   **Build TypeScript to JavaScript**
+    **Build TypeScript to JavaScript**
 
-   ```bash
-   npm run build
-   ```
+    ```bash
+    npm run build
+    ```
 
-   **Start production server**
+    **Start production server**
 
-   ```bash
-   npm start
-   ```
+    ```bash
+    npm start
+    ```
 
-   **TypeScript compilation**
+    **TypeScript compilation**
 
-   ```bash
-   npx tsc
-   ```
+    ```bash
+    npx tsc
+    ```
 
 ### Project Structure
 
