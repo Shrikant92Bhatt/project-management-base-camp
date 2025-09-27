@@ -14,7 +14,14 @@
         "lint": "eslint . --ext .ts,.js",
         "lint:fix": "eslint . --ext .ts,.js --fix",
         "format": "prettier --write .",
-        "format:check": "prettier --check ."
+        "format:check": "prettier --check .",
+        "version:patch": "npm version patch --no-git-tag-version",
+        "version:minor": "npm version minor --no-git-tag-version",
+        "version:major": "npm version major --no-git-tag-version",
+        "pre-commit": "npm run version:patch && git add package.json package-lock.json",
+        "commit": "npm run pre-commit && git commit",
+        "setup:git-hooks": "bash scripts/setup-git-hooks.sh",
+        "setup:husky": "node scripts/setup-husky.js"
     },
     "dependencies": {
         "cors": "^2.8.5",
