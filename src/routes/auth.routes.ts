@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { registerController } from '../controller';
+import { registerController, login } from '../controller';
 import { validate } from '../middleware';
-import { userRegisterValidator } from '../validators';
+import { userLoginValidator, userRegisterValidator } from '../validators';
 
 const router = Router();
 console.log('Auth router loaded');
-router.post('/register', validate, userRegisterValidator(), registerController);
+router.post('/register', userRegisterValidator(), validate, registerController);
+router.post('/login', userLoginValidator(), validate, login);
 
 export default router;

@@ -5,6 +5,7 @@ import { asyncHandler } from '../utils/async-handler';
 import { sendEmail, emailVerificationMailgenContent } from '../utils/mail';
 import { NextFunction, Request, Response } from 'express';
 import { USER_ROLES_ENUM } from '../constants/user.constants';
+import { cookie } from 'express-validator';
 
 // Register request interface
 interface RegisterRequest {
@@ -12,6 +13,13 @@ interface RegisterRequest {
     email: string;
     password: string;
     fullname: string;
+}
+
+// Login request interface
+interface LoginRequest {
+    email?: string;
+    username?: string;
+    password: string;
 }
 const generateAccessAndRefreshToken = async (userId: string) => {
     try {
@@ -100,4 +108,46 @@ const registerController = asyncHandler(
     },
 );
 
-export { registerController };
+const login = asyncHandler(async (req: Request<{}, {}, LoginRequest>, res: Response, next: NextFunction) => {
+    try {
+        const { email, password, username } = req.body;
+        if (!email && !username) {
+            throw new APIError(400, 'Either email or username is required');
+        }
+        const user = await User.findOne({ $or: [{ email }, { username }] });
+        if (!user) {
+            throw new APIError(404, 'User not found');
+        }
+        const isPasswordValid = await user.comparePassword(password);
+        if (!isPasswordValid) {
+            throw new APIError(401, 'Invalid password');
+        }
+        const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id as string);
+        
+        // Remove sensitive data from response
+        const userResponse = user.toObject();
+        
+        delete (userResponse as any).password;
+        delete (userResponse as any).refreshToken;
+        res.status(200).cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+        }).cookie('accessToken', accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 1000 * 60 * 60 * 24 * 1, // 1 day
+        }).json(new APIResponse(200, { 
+            user: userResponse, 
+            accessToken, 
+            refreshToken 
+        }, 'Login successful'));
+    } catch (error) {
+        console.error(error);
+        throw new APIError(500, 'Internal Server Error', [
+            error instanceof Error ? error.message : 'Unknown error',
+        ]);
+    }
+});
+
+export { registerController, login };

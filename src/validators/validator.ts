@@ -31,4 +31,12 @@ const userRegisterValidator = () => {
     ];
 };
 
-export { userRegisterValidator };
+const userLoginValidator = () => {
+    return [
+        body('email').trim().notEmpty().withMessage('Email is required').isEmail().withMessage('Invalid email address'),
+        body('username').trim().notEmpty().withMessage('Username is required').isLowercase().withMessage('Username must be in lowercase'),
+        body('password').trim().notEmpty().withMessage('Password is required'),
+    ];
+};
+
+export { userRegisterValidator, userLoginValidator };
