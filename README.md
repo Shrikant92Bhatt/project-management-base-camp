@@ -108,22 +108,22 @@ Project Camp Backend enables teams to organize projects, manage tasks with subta
     ```bash
     # Server Configuration
     PORT=3000
-    
+
     # Database Configuration
     MONGODB_URI=mongodb://localhost:27017/project-camp
     # OR for MongoDB Atlas:
     # MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/project-camp
-    
+
     # CORS Configuration
     CORS_ORIGIN=http://localhost:5173
     # For multiple origins: CORS_ORIGIN=http://localhost:5173,http://localhost:3000
-    
+
     # JWT Configuration (to be added)
     # JWT_SECRET=your-secret-key
     # JWT_REFRESH_SECRET=your-refresh-secret
     # JWT_EXPIRES_IN=1d
     # JWT_REFRESH_EXPIRES_IN=7d
-    
+
     # Email Configuration (to be added)
     # SMTP_HOST=smtp.gmail.com
     # SMTP_PORT=587
@@ -173,32 +173,6 @@ Project Camp Backend enables teams to organize projects, manage tasks with subta
     # Code formatting
     npm run format
     npm run format:check
-    ```
-
-5. **Setup Automatic Version Updates** (Optional)
-
-    Choose one of the following methods:
-
-    **Method 1: Simple Git Hooks**
-    ```bash
-    npm run setup:git-hooks
-    ```
-
-    **Method 2: Husky (Recommended)**
-    ```bash
-    npm run setup:husky
-    ```
-
-    **Manual Version Updates**
-    ```bash
-    # Patch version (1.0.0 -> 1.0.1)
-    npm run version:patch
-    
-    # Minor version (1.0.0 -> 1.1.0)
-    npm run version:minor
-    
-    # Major version (1.0.0 -> 2.0.0)
-    npm run version:major
     ```
 
 ### Project Structure
@@ -272,11 +246,13 @@ npm run dev
 ```
 
 The server will:
+
 1. Connect to MongoDB using the `MONGODB_URI` from your `.env` file
 2. Start the Express server on `http://localhost:3000` (or the PORT specified in your `.env` file)
 3. Display connection status with emoji indicators (✅ for success, ❌ for errors)
 
 **Expected startup output:**
+
 ```
 ✅ Connected to MongoDB
 ✅ Server is running on http://localhost:3000 🚀
@@ -285,49 +261,280 @@ The server will:
 ## Implemented Features
 
 ### Core Infrastructure
+
 - **Database Integration**: MongoDB connection with error handling and startup integration
 - **API Response System**: Generic `APIResponse<T>` class with `IAPIResponse<T>` interface for type-safe responses
 - **Error Handling**: `APIError` class for structured error responses with status codes
 - **Constants Management**: Centralized user roles and task status enums
 - **Enhanced Express Setup**: CORS configuration, request limits, static file serving
-- **Version Management**: Automatic patch version updates on every commit with version utilities
 
 ### Available Utilities
+
 ```typescript
 // API Response
 import { APIResponse, IAPIResponse } from './utils';
 
-const response = new APIResponse<User>(200, userData, "User retrieved");
+const response = new APIResponse<User>(200, userData, 'User retrieved');
 // response: { statusCode: 200, data: User, message: "User retrieved", success: true }
 
 // API Error
 import { APIError } from './utils';
 
-throw new APIError(404, "User not found", ["Invalid user ID"]);
+throw new APIError(404, 'User not found', ['Invalid user ID']);
 
 // Constants
 import { USER_ROLES_ENUM, TASK_STATUS_ENUM } from './constants';
 
 const userRole = USER_ROLES_ENUM.ADMIN; // 'admin'
 const taskStatus = TASK_STATUS_ENUM.IN_PROGRESS; // 'in_progress'
+```
 
-// Version Management
-import { VersionManager } from './utils';
+## Code Documentation
 
-const currentVersion = VersionManager.getCurrentVersion(); // '1.0.0'
-const versionInfo = VersionManager.getVersionInfo(); // Full version object
-const comparison = VersionManager.compareVersions('1.0.1', '1.0.0'); // 1
+### Core Architecture
+
+The project follows a modular architecture with clear separation of concerns:
+
+```
+src/
+├── app.ts              # Express application configuration
+├── index.ts            # Application entry point with DB connection
+├── constants/          # Application constants and enums
+├── controller/         # Request handlers and business logic
+├── db/                 # Database connection and configuration
+├── middleware/         # Custom middleware functions
+├── models/             # MongoDB schemas and data models
+├── routes/             # API route definitions
+├── utils/              # Utility functions and helpers
+└── validators/         # Input validation schemas
+```
+
+### Utility Classes and Functions
+
+#### API Response System
+
+**APIResponse Class**: Generic response wrapper for consistent API responses
+
+```typescript
+import { APIResponse } from './utils';
+
+// Success response
+const successResponse = new APIResponse(
+    200,
+    userData,
+    'User retrieved successfully',
+);
+// Returns: { statusCode: 200, data: User, message: "User retrieved successfully", success: true }
+
+// Error response
+const errorResponse = new APIResponse(404, null, 'User not found');
+// Returns: { statusCode: 404, data: null, message: "User not found", success: false }
+```
+
+**APIError Class**: Structured error handling with status codes
+
+```typescript
+import { APIError } from './utils';
+
+// Throw structured errors
+throw new APIError(400, 'Validation failed', [
+    'Email is required',
+    'Password must be at least 8 characters',
+]);
+
+// Error response format
+// { statusCode: 400, message: "Validation failed", errors: [...], success: false }
+```
+
+#### Async Handler Utility
+
+**asyncHandler**: Wrapper for async route handlers to catch errors
+
+```typescript
+import { asyncHandler } from './utils';
+
+// Wrap async controllers
+const userController = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            throw new APIError(404, 'User not found');
+        }
+        res.json(new APIResponse(200, user, 'User retrieved successfully'));
+    },
+);
+```
+
+### Database Models
+
+#### User Model
+
+**Schema Structure**:
+
+```typescript
+{
+    avatar: {
+        url: String,
+        localpath: String
+    },
+    username: String (unique, indexed, lowercase),
+    email: String (unique, required, lowercase),
+    fullname: String (required),
+    password: String (required, hashed),
+    isEmailVerified: Boolean (default: false),
+    refreshToken: String,
+    forgotPasswordToken: String,
+    forgotPasswordTokenExpiry: Date,
+    emailVerificationToken: String,
+    emailVerificationTokenExpiry: Date,
+    timestamps: true
+}
+```
+
+**Instance Methods**:
+
+```typescript
+// Compare password
+const isValid = await user.comparePassword(plainPassword);
+
+// Generate JWT tokens
+const accessToken = user.generateAuthToken();
+const refreshToken = user.generateRefreshToken();
+
+// Generate temporary tokens for email verification/password reset
+const { unHashedToken, hashedToken, tokenExpiry } = user.generateTempToken();
+```
+
+**Pre-save Middleware**: Automatically hashes passwords before saving
+
+### Email System
+
+**Mail Templates**: Professional email templates using Mailgen
+
+```typescript
+import {
+    emailVerificationMailgenContent,
+    forgotPasswordMailgenContent,
+    sendEmail,
+} from './utils';
+
+// Email verification template
+const verificationContent = emailVerificationMailgenContent(
+    'John Doe',
+    'https://yourapp.com/verify?token=abc123',
+);
+
+// Password reset template
+const resetContent = forgotPasswordMailgenContent(
+    'John Doe',
+    'https://yourapp.com/reset?token=xyz789',
+);
+
+// Send email
+await sendEmail({
+    email: 'user@example.com',
+    subject: 'Verify your email',
+    mailgenContent: verificationContent,
+});
+```
+
+**Email Configuration**: Uses Nodemailer with Mailtrap for development
+
+### Constants and Enums
+
+**User Roles**:
+
+```typescript
+enum USER_ROLES_ENUM {
+    ADMIN = 'admin', // Full system access
+    PROJECT_ADMIN = 'project_admin', // Project-level admin
+    MEMBER = 'member', // Basic member access
+}
+
+const AVAILABLE_USER_ROLES = Object.values(USER_ROLES_ENUM);
+// ['admin', 'project_admin', 'member']
+```
+
+**Task Status**:
+
+```typescript
+enum TASK_STATUS_ENUM {
+    TODO = 'todo',
+    IN_PROGRESS = 'in_progress',
+    DONE = 'done',
+}
+
+const AVAILABLE_TASK_STATUS = Object.values(TASK_STATUS_ENUM);
+// ['todo', 'in_progress', 'done']
+```
+
+### Database Connection
+
+**MongoDB Integration**:
+
+```typescript
+import connectDB from './db';
+
+// Connect to MongoDB with error handling
+await connectDB();
+// Automatically loads MONGODB_URI from environment variables
+// Exits process on connection failure
+```
+
+### Application Configuration
+
+**Express Setup**:
+
+```typescript
+// CORS Configuration
+app.use(
+    cors({
+        origin: process.env.CORS_ORIGIN?.split(',') || 'http://localhost:5173',
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+    }),
+);
+
+// Request parsing with size limits
+app.use(express.json({ limit: '16kb' }));
+app.use(express.urlencoded({ extended: true, limit: '16kb' }));
+
+// Static file serving
+app.use(express.static(path.join(__dirname, 'public')));
 ```
 
 ## API Documentation
 
-**Note:** API endpoints are currently being implemented according to the Product Requirements Document (PRD.md).
-
 **Available Endpoints:**
 
 - **Health Check**: `GET /` - Basic server status
-- **Version Info**: `GET /version` - Application version information
 - **Test Endpoint**: `GET /instagram` - Development test endpoint
+- **Health Check API**: `GET /api/v1/healthcheck/` - Structured health check
+
+**API Response Format**:
+
+```json
+{
+    "statusCode": 200,
+    "data": {
+        /* response data */
+    },
+    "message": "Success message",
+    "success": true
+}
+```
+
+**Error Response Format**:
+
+```json
+{
+    "statusCode": 400,
+    "message": "Error message",
+    "errors": ["Detailed error 1", "Detailed error 2"],
+    "success": false
+}
+```
 
 **Planned API Structure:**
 
@@ -339,12 +546,237 @@ const comparison = VersionManager.compareVersions('1.0.1', '1.0.0'); // 1
 
 For detailed API specifications, see [PRD.md](./PRD.md).
 
+## Security Best Practices
+
+### Environment Variables Protection
+
+**Critical**: Never commit sensitive credentials to version control. Always use environment variables for:
+
+```bash
+# Required Environment Variables (Create your own .env file)
+PORT=3000
+MONGODB_URI=mongodb://localhost:27017/project-camp
+CORS_ORIGIN=http://localhost:5173
+
+# JWT Configuration (Generate your own secrets)
+ACCESS_TOKEN_SECRET=your-super-secret-access-token-key-here
+REFRESH_TOKEN_SECRET=your-super-secret-refresh-token-key-here
+ACCESS_TOKEN_EXPIRY=1d
+REFRESH_TOKEN_EXPIRY=7d
+
+# Email Configuration (Use your own email service)
+MAILTRAP_SMTP_HOST=your-mailtrap-host
+MAILTRAP_SMTP_PORT=587
+MAILTRAP_SMTP_USER=your-mailtrap-username
+MAILTRAP_SMTP_PASS=your-mailtrap-password
+```
+
+### Security Features Implemented
+
+1. **Password Hashing**: Automatic bcrypt hashing with salt rounds
+2. **JWT Authentication**: Secure token-based authentication with refresh tokens
+3. **Input Validation**: Request size limits and data sanitization
+4. **CORS Protection**: Configurable cross-origin resource sharing
+5. **Email Verification**: Secure email verification system
+6. **Password Reset**: Cryptographically secure password reset tokens
+
+### Setting Up Your Own Credentials
+
+#### 1. MongoDB Setup
+
+```bash
+# Local MongoDB
+MONGODB_URI=mongodb://localhost:27017/project-camp
+
+# MongoDB Atlas (Recommended for production)
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/project-camp
+```
+
+#### 2. JWT Secrets Generation
+
+```bash
+# Generate secure random strings for JWT secrets
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+#### 3. Email Service Setup
+
+**Option A: Mailtrap (Development)**
+
+1. Sign up at [mailtrap.io](https://mailtrap.io)
+2. Get your SMTP credentials from inbox settings
+3. Add credentials to `.env` file
+
+**Option B: Gmail (Production)**
+
+```bash
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-specific-password
+```
+
+**Option C: SendGrid, AWS SES, or other providers**
+
+- Follow provider-specific documentation
+- Update mail configuration in `src/utils/mail.ts`
+
+## Development Workflow
+
+### Getting Started for New Developers
+
+1. **Fork and Clone**
+
+    ```bash
+    git clone https://github.com/your-username/project-camp.git
+    cd project-camp
+    ```
+
+2. **Install Dependencies**
+
+    ```bash
+    npm install
+    # or
+    yarn install
+    ```
+
+3. **Environment Setup**
+
+    ```bash
+    # Copy example environment file
+    cp .env.example .env
+
+    # Edit .env with your own credentials
+    nano .env
+    ```
+
+4. **Start Development Server**
+    ```bash
+    npm run dev
+    ```
+
+### Code Quality Standards
+
+#### Linting and Formatting
+
+```bash
+# Check for linting issues
+npm run lint
+
+# Auto-fix linting issues
+npm run lint:fix
+
+# Format code
+npm run format
+
+# Check formatting
+npm run format:check
+```
+
+#### TypeScript Compilation
+
+```bash
+# Compile TypeScript
+npm run build
+
+# Watch mode compilation
+npm run tsg
+```
+
+### Testing Strategy
+
+**Current Status**: Testing framework to be implemented
+
+**Planned Testing Structure**:
+
+- Unit tests for utility functions
+- Integration tests for API endpoints
+- Database model tests
+- Authentication flow tests
+
+### API Development Guidelines
+
+1. **Use TypeScript**: All new code must be written in TypeScript
+2. **Follow Response Format**: Use `APIResponse` class for success responses
+3. **Error Handling**: Use `APIError` class for structured errors
+4. **Async Wrapper**: Use `asyncHandler` for all async route handlers
+5. **Validation**: Implement input validation for all endpoints
+6. **Documentation**: Update API documentation for new endpoints
+
+### Database Guidelines
+
+1. **Schema Design**: Follow MongoDB best practices
+2. **Indexing**: Add appropriate indexes for query performance
+3. **Validation**: Use Mongoose schema validation
+4. **Relationships**: Plan data relationships carefully
+5. **Migration**: Document schema changes
+
+## Deployment
+
+### Production Environment
+
+1. **Environment Variables**: Set all required environment variables
+2. **Database**: Use MongoDB Atlas or production MongoDB instance
+3. **Email Service**: Configure production email service
+4. **Security**: Ensure all security measures are in place
+5. **Monitoring**: Set up application monitoring
+
+### Docker Deployment (Future)
+
+```dockerfile
+# Dockerfile example (to be implemented)
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
 ## Contributing
 
-This project is currently in active development. Please refer to the PRD.md for the complete feature specifications and implementation roadmap.
+### How to Contribute
+
+1. **Fork the Repository**: Create your own fork
+2. **Create Feature Branch**: `git checkout -b feature/your-feature-name`
+3. **Follow Code Standards**: Use provided linting and formatting tools
+4. **Write Tests**: Add tests for new functionality
+5. **Update Documentation**: Update README and API documentation
+6. **Submit Pull Request**: Create PR with detailed description
+
+### Pull Request Guidelines
+
+- **Clear Description**: Explain what changes were made and why
+- **Code Quality**: Ensure code passes all linting checks
+- **Testing**: Include tests for new functionality
+- **Documentation**: Update relevant documentation
+- **Breaking Changes**: Clearly mark any breaking changes
+
+### Issue Reporting
+
+When reporting issues, include:
+
+- **Environment**: Node.js version, OS, database setup
+- **Steps to Reproduce**: Clear steps to reproduce the issue
+- **Expected Behavior**: What should happen
+- **Actual Behavior**: What actually happens
+- **Error Messages**: Full error messages and stack traces
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+- **Documentation**: Check this README and PRD.md
+- **Issues**: Use GitHub Issues for bug reports and feature requests
+- **Discussions**: Use GitHub Discussions for questions and general discussion
 
 ---
 
 **Version:** 1.0.0  
 **Type:** Backend API for Project Management System  
-**Status:** 🚧 In Development
+**Status:** 🚧 In Development  
+**Last Updated:** $(date)

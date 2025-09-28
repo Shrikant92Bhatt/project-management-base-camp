@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import { router as healthCheckRouter } from './routes';
 
 const app = express();
 
@@ -16,19 +17,14 @@ app.use(
     }),
 );
 
+app.use('/api/v1/healthcheck', healthCheckRouter);
+
 app.get('/', (req, res) => {
     res.send('Hello World to BaseCamp');
 });
 
 app.get('/instagram', (req, res) => {
     res.send('Hello World from instagram to BaseCamp');
-});
-
-// Version endpoint
-app.get('/version', (req, res) => {
-    const { VersionManager } = require('./utils');
-    const versionInfo = VersionManager.getVersionInfo();
-    res.json(versionInfo);
 });
 
 export default app;

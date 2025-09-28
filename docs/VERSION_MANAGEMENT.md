@@ -17,6 +17,7 @@ npm run setup:git-hooks
 ```
 
 This will:
+
 - Create a pre-commit hook that automatically bumps the patch version
 - Make the hook executable
 - Install it in your `.git/hooks/` directory
@@ -30,6 +31,7 @@ npm run setup:husky
 ```
 
 This will:
+
 - Install Husky as a dev dependency
 - Set up proper Git hooks with Husky
 - Add a prepare script to package.json
@@ -75,10 +77,10 @@ const info = VersionManager.getVersionInfo();
 // Returns: { name, version, description, timestamp }
 
 // Parse version components
-const { major, minor, patch } = VersionManager.parseVersion("1.2.3");
+const { major, minor, patch } = VersionManager.parseVersion('1.2.3');
 
 // Compare versions
-const result = VersionManager.compareVersions("1.1.0", "1.0.0"); // 1 (greater)
+const result = VersionManager.compareVersions('1.1.0', '1.0.0'); // 1 (greater)
 ```
 
 ## Version Endpoint
@@ -90,12 +92,13 @@ GET /version
 ```
 
 Response:
+
 ```json
 {
-  "name": "project-camp",
-  "version": "1.0.0",
-  "description": "Project management application for beginner",
-  "timestamp": "2024-01-15T10:30:00.000Z"
+    "name": "project-camp",
+    "version": "1.0.0",
+    "description": "Project management application for beginner",
+    "timestamp": "2024-01-15T10:30:00.000Z"
 }
 ```
 
@@ -135,26 +138,28 @@ The automatic version updates make it easy to track deployments:
 ### Git Hook Not Working
 
 1. Check if the hook is executable:
-   ```bash
-   ls -la .git/hooks/pre-commit
-   ```
+
+    ```bash
+    ls -la .git/hooks/pre-commit
+    ```
 
 2. Reinstall hooks:
-   ```bash
-   npm run setup:git-hooks
-   ```
+    ```bash
+    npm run setup:git-hooks
+    ```
 
 ### Husky Issues
 
 1. Reinstall Husky:
-   ```bash
-   npm run setup:husky
-   ```
+
+    ```bash
+    npm run setup:husky
+    ```
 
 2. Check Husky installation:
-   ```bash
-   npx husky install
-   ```
+    ```bash
+    npx husky install
+    ```
 
 ### Version Conflicts
 
@@ -169,15 +174,16 @@ If you have version conflicts:
 To temporarily disable automatic version updates:
 
 1. Remove or rename the pre-commit hook:
-   ```bash
-   mv .git/hooks/pre-commit .git/hooks/pre-commit.disabled
-   ```
+
+    ```bash
+    mv .git/hooks/pre-commit .git/hooks/pre-commit.disabled
+    ```
 
 2. To re-enable:
-   ```bash
-   mv .git/hooks/pre-commit.disabled .git/hooks/pre-commit
-   chmod +x .git/hooks/pre-commit
-   ```
+    ```bash
+    mv .git/hooks/pre-commit.disabled .git/hooks/pre-commit
+    chmod +x .git/hooks/pre-commit
+    ```
 
 ## Integration with CI/CD
 
