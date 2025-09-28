@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
-import { router as healthCheckRouter } from './routes';
+import { healthCheckRouter, authRouter } from './routes';
 
 const app = express();
 
@@ -18,6 +18,7 @@ app.use(
 );
 
 app.use('/api/v1/healthcheck', healthCheckRouter);
+app.use('/api/v1/auth', authRouter);
 
 app.get('/', (req, res) => {
     res.send('Hello World to BaseCamp');

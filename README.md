@@ -372,22 +372,23 @@ const userController = asyncHandler(
 **Schema Structure**:
 
 ```typescript
-{
+interface IUser extends Document {
     avatar: {
-        url: String,
-        localpath: String
-    },
-    username: String (unique, indexed, lowercase),
-    email: String (unique, required, lowercase),
-    fullname: String (required),
-    password: String (required, hashed),
-    isEmailVerified: Boolean (default: false),
-    refreshToken: String,
-    forgotPasswordToken: String,
-    forgotPasswordTokenExpiry: Date,
-    emailVerificationToken: String,
-    emailVerificationTokenExpiry: Date,
-    timestamps: true
+        url: string;
+        localpath: string;
+    };
+    username: string; // unique, indexed, lowercase
+    email: string; // unique, required, lowercase
+    fullname: string; // required
+    password: string; // required, hashed
+    isEmailVerified: boolean; // default: false
+    refreshToken?: string;
+    forgotPasswordToken?: string;
+    forgotPasswordTokenExpiry?: Date;
+    emailVerificationToken?: string;
+    emailVerificationTokenExpiry?: Date;
+    createdAt: Date;
+    updatedAt: Date;
 }
 ```
 
@@ -438,7 +439,23 @@ await sendEmail({
 });
 ```
 
-**Email Configuration**: Uses Nodemailer with Mailtrap for development
+**Email Configuration**: Uses Nodemailer with SSL/TLS support
+
+```typescript
+// SSL Configuration for email
+const transporter = nodemailer.createTransport({
+    host: process.env.MAILTRAP_SMTP_HOST,
+    port: parseInt(process.env.MAILTRAP_SMTP_PORT) || 587,
+    secure: false, // true for 465, false for other ports
+    auth: {
+        user: process.env.MAILTRAP_SMTP_USER,
+        pass: process.env.MAILTRAP_SMTP_PASS,
+    },
+    tls: {
+        rejectUnauthorized: false, // Allow self-signed certificates
+    },
+});
+```
 
 ### Constants and Enums
 

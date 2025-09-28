@@ -1,1 +1,2 @@
-export * from './health-check.router';
+export { router as healthCheckRouter } from './health-check.routes';
+export { default as authRouter } from './auth.routes';

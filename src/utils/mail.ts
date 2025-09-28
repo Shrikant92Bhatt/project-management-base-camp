@@ -63,12 +63,16 @@ const sendEmail = async (options: any) => {
 
     const transporter = nodemailer.createTransport({
         host: process.env.MAILTRAP_SMTP_HOST!,
-        port: process.env.MAILTRAP_SMTP_PORT!,
+        port: parseInt(process.env.MAILTRAP_SMTP_PORT!) || 587,
+        secure: false, // true for 465, false for other ports
         auth: {
             user: process.env.MAILTRAP_SMTP_USER!,
             pass: process.env.MAILTRAP_SMTP_PASS!,
         },
-    } as any);
+        tls: {
+            rejectUnauthorized: false, // Allow self-signed certificates
+        },
+    });
 
     const mail = {
         from: 'mail.taskmanagement@example.com',
@@ -80,8 +84,12 @@ const sendEmail = async (options: any) => {
 
     try {
         await transporter.sendMail(mail);
+        console.log('Email sent successfully to:', options.email);
     } catch (error) {
-        console.error(error);
+        console.error('Failed to send email:', error);
+        throw new Error(
+            `Failed to send email: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
     }
 };
 
