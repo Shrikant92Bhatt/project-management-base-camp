@@ -490,6 +490,250 @@ Authorization: Bearer <access_token>
 
 OR use httpOnly cookies (automatically sent by browser).
 
+### Detailed API Documentation
+
+#### Authentication Routes
+
+**POST `/api/v1/auth/register`**
+```json
+// Request Body
+{
+    "username": "john_doe",          // 3-20 chars, lowercase, required
+    "email": "user@example.com",     // Valid email, required
+    "fullname": "John Doe",          // Optional but validated if provided
+    "password": "secure_password"    // 8-20 chars, required
+}
+
+// Success Response (201)
+{
+    "statusCode": 201,
+    "data": {
+        "_id": "user_id",
+        "username": "john_doe",
+        "email": "user@example.com",
+        "fullname": "John Doe",
+        "role": "member",
+        "isEmailVerified": false,
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    "message": "User created successfully",
+    "success": true
+}
+```
+
+**POST `/api/v1/auth/login`**
+```json
+// Request Body (either email OR username required)
+{
+    "email": "user@example.com",     // OR
+    "username": "john_doe",          // Either email or username required
+    "password": "your_password"      // Required
+}
+
+// Success Response (200)
+{
+    "statusCode": 200,
+    "data": {
+        "user": {
+            "_id": "user_id",
+            "username": "john_doe",
+            "email": "user@example.com",
+            "fullname": "John Doe",
+            "role": "member",
+            "isEmailVerified": true
+        },
+        "accessToken": "jwt_access_token",
+        "refreshToken": "jwt_refresh_token"
+    },
+    "message": "Login successful",
+    "success": true
+}
+```
+
+**GET `/api/v1/auth/verify-email/:verificationToken`**
+```json
+// URL Parameter
+:verificationToken = "unhashed_verification_token"
+
+// Success Response (200)
+{
+    "statusCode": 200,
+    "data": {
+        "message": "Email verified successfully"
+    },
+    "message": "Email verification successful",
+    "success": true
+}
+```
+
+**POST `/api/v1/auth/forgot-password`**
+```json
+// Request Body
+{
+    "email": "user@example.com"      // Valid email, required
+}
+
+// Success Response (200)
+{
+    "statusCode": 200,
+    "data": {
+        "message": "Password reset email sent"
+    },
+    "message": "Password reset email sent successfully",
+    "success": true
+}
+```
+
+**POST `/api/v1/auth/reset-password/:resetToken`**
+```json
+// URL Parameter
+:resetToken = "unhashed_reset_token"
+
+// Request Body
+{
+    "password": "new_password"       // Required
+}
+
+// Success Response (200)
+{
+    "statusCode": 200,
+    "data": {
+        "message": "Password reset successfully"
+    },
+    "message": "Password reset successful",
+    "success": true
+}
+```
+
+**POST `/api/v1/auth/refresh-token`**
+```json
+// Request Body
+{
+    "refreshToken": "jwt_refresh_token"  // Required
+}
+
+// Success Response (200)
+{
+    "statusCode": 200,
+    "data": {
+        "accessToken": "new_jwt_access_token"
+    },
+    "message": "Token refreshed successfully",
+    "success": true
+}
+```
+
+#### Protected Routes (Require Authentication)
+
+**GET `/api/v1/auth/current-user`**
+```json
+// Headers
+Authorization: Bearer <access_token>
+// OR use httpOnly cookies (automatically sent)
+
+// Success Response (200)
+{
+    "statusCode": 200,
+    "data": {
+        "_id": "user_id",
+        "username": "john_doe",
+        "email": "user@example.com",
+        "fullname": "John Doe",
+        "role": "member",
+        "isEmailVerified": true,
+        "avatar": {
+            "url": "",
+            "localpath": "https://placehold.co/400"
+        },
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    "message": "User profile retrieved successfully",
+    "success": true
+}
+```
+
+**POST `/api/v1/auth/change-password`**
+```json
+// Headers
+Authorization: Bearer <access_token>
+
+// Request Body
+{
+    "currentPassword": "old_password",   // Required
+    "newPassword": "new_password"        // Required
+}
+
+// Success Response (200)
+{
+    "statusCode": 200,
+    "data": {
+        "message": "Password changed successfully"
+    },
+    "message": "Password changed successfully",
+    "success": true
+}
+```
+
+**POST `/api/v1/auth/logout`**
+```json
+// Headers
+Authorization: Bearer <access_token>
+
+// Success Response (200)
+{
+    "statusCode": 200,
+    "data": {
+        "message": "Logged out successfully"
+    },
+    "message": "Logout successful",
+    "success": true
+}
+```
+
+#### Error Response Examples
+
+**Validation Error (400)**
+```json
+{
+    "statusCode": 400,
+    "message": "Validation failed",
+    "errors": [
+        "Username must be between 3 and 20 characters",
+        "Email is required"
+    ],
+    "success": false
+}
+```
+
+**Authentication Error (401)**
+```json
+{
+    "statusCode": 401,
+    "message": "Unauthorized",
+    "success": false
+}
+```
+
+**Not Found Error (404)**
+```json
+{
+    "statusCode": 404,
+    "message": "User not found",
+    "success": false
+}
+```
+
+**Conflict Error (409)**
+```json
+{
+    "statusCode": 409,
+    "message": "User already exists",
+    "success": false
+}
+```
+
 ## Security Best Practices
 
 ### Environment Variables Protection
