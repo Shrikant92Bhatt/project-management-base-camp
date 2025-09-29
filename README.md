@@ -293,243 +293,149 @@ const taskStatus = TASK_STATUS_ENUM.IN_PROGRESS; // 'in_progress'
 
 ### Core Architecture
 
-The project follows a modular architecture with clear separation of concerns:
-
 ```
 src/
-├── app.ts              # Express application configuration
-├── index.ts            # Application entry point with DB connection
-├── constants/          # Application constants and enums
-├── controller/         # Request handlers and business logic
-├── db/                 # Database connection and configuration
-├── middleware/         # Custom middleware functions
-├── models/             # MongoDB schemas and data models
-├── routes/             # API route definitions
-├── utils/              # Utility functions and helpers
+├── app.ts              # Express app with CORS, middleware, routes
+├── index.ts            # Server startup with DB connection
+├── constants/          # User roles, task status enums
+├── controller/         # Auth controllers (register, login)
+├── db/                 # MongoDB connection
+├── middleware/         # Auth verification, validation
+├── models/             # User schema with JWT methods
+├── routes/             # API endpoints
+├── utils/              # API responses, errors, email, async handler
 └── validators/         # Input validation schemas
 ```
 
-### Utility Classes and Functions
+### Key Components
 
 #### API Response System
 
-**APIResponse Class**: Generic response wrapper for consistent API responses
-
 ```typescript
-import { APIResponse } from './utils';
-
 // Success response
-const successResponse = new APIResponse(
-    200,
-    userData,
-    'User retrieved successfully',
-);
-// Returns: { statusCode: 200, data: User, message: "User retrieved successfully", success: true }
+new APIResponse(200, data, 'Success message');
+// Returns: { statusCode: 200, data, message: "Success message", success: true }
 
-// Error response
-const errorResponse = new APIResponse(404, null, 'User not found');
-// Returns: { statusCode: 404, data: null, message: "User not found", success: false }
+// Error handling
+throw new APIError(400, 'Error message', ['detail1', 'detail2']);
+// Returns: { statusCode: 400, message: "Error message", errors: [...], success: false }
 ```
 
-**APIError Class**: Structured error handling with status codes
+#### Async Handler
 
 ```typescript
-import { APIError } from './utils';
-
-// Throw structured errors
-throw new APIError(400, 'Validation failed', [
-    'Email is required',
-    'Password must be at least 8 characters',
-]);
-
-// Error response format
-// { statusCode: 400, message: "Validation failed", errors: [...], success: false }
-```
-
-#### Async Handler Utility
-
-**asyncHandler**: Wrapper for async route handlers to catch errors
-
-```typescript
-import { asyncHandler } from './utils';
-
-// Wrap async controllers
-const userController = asyncHandler(
-    async (req: Request, res: Response, next: NextFunction) => {
-        const user = await User.findById(req.params.id);
-        if (!user) {
-            throw new APIError(404, 'User not found');
-        }
-        res.json(new APIResponse(200, user, 'User retrieved successfully'));
-    },
-);
-```
-
-### Database Models
-
-#### User Model
-
-**Schema Structure**:
-
-```typescript
-interface IUser extends Document {
-    avatar: {
-        url: string;
-        localpath: string;
-    };
-    username: string; // unique, indexed, lowercase
-    email: string; // unique, required, lowercase
-    fullname: string; // required
-    password: string; // required, hashed
-    isEmailVerified: boolean; // default: false
-    refreshToken?: string;
-    forgotPasswordToken?: string;
-    forgotPasswordTokenExpiry?: Date;
-    emailVerificationToken?: string;
-    emailVerificationTokenExpiry?: Date;
-    createdAt: Date;
-    updatedAt: Date;
-}
-```
-
-**Instance Methods**:
-
-```typescript
-// Compare password
-const isValid = await user.comparePassword(plainPassword);
-
-// Generate JWT tokens
-const accessToken = user.generateAuthToken();
-const refreshToken = user.generateRefreshToken();
-
-// Generate temporary tokens for email verification/password reset
-const { unHashedToken, hashedToken, tokenExpiry } = user.generateTempToken();
-```
-
-**Pre-save Middleware**: Automatically hashes passwords before saving
-
-### Email System
-
-**Mail Templates**: Professional email templates using Mailgen
-
-```typescript
-import {
-    emailVerificationMailgenContent,
-    forgotPasswordMailgenContent,
-    sendEmail,
-} from './utils';
-
-// Email verification template
-const verificationContent = emailVerificationMailgenContent(
-    'John Doe',
-    'https://yourapp.com/verify?token=abc123',
-);
-
-// Password reset template
-const resetContent = forgotPasswordMailgenContent(
-    'John Doe',
-    'https://yourapp.com/reset?token=xyz789',
-);
-
-// Send email
-await sendEmail({
-    email: 'user@example.com',
-    subject: 'Verify your email',
-    mailgenContent: verificationContent,
+const controller = asyncHandler(async (req, res, next) => {
+    // Auto-catches errors and passes to error middleware
+    const result = await someAsyncOperation();
+    res.json(new APIResponse(200, result, 'Success'));
 });
 ```
 
-**Email Configuration**: Uses Nodemailer with SSL/TLS support
+### User Model
 
 ```typescript
-// SSL Configuration for email
+interface IUser {
+    username: string; // unique, lowercase
+    email: string; // unique, lowercase
+    fullname: string; // required
+    password: string; // auto-hashed
+    role: string; // admin, project_admin, member
+    isEmailVerified: boolean;
+    // JWT tokens and email verification fields
+}
+
+// Methods
+await user.comparePassword(password); // Verify password
+user.generateAuthToken(); // Generate access token
+user.generateRefreshToken(); // Generate refresh token
+user.generateTempToken(); // Email verification tokens
+```
+
+### Email System
+
+```typescript
+// Send verification email
+await sendEmail({
+    email: 'user@example.com',
+    subject: 'Verify your email',
+    mailgenContent: emailVerificationMailgenContent(username, verificationUrl),
+});
+
+// SSL Configuration
 const transporter = nodemailer.createTransport({
     host: process.env.MAILTRAP_SMTP_HOST,
-    port: parseInt(process.env.MAILTRAP_SMTP_PORT) || 587,
-    secure: false, // true for 465, false for other ports
+    port: 587,
+    secure: false,
     auth: {
         user: process.env.MAILTRAP_SMTP_USER,
         pass: process.env.MAILTRAP_SMTP_PASS,
     },
-    tls: {
-        rejectUnauthorized: false, // Allow self-signed certificates
-    },
+    tls: { rejectUnauthorized: false },
 });
 ```
 
-### Constants and Enums
-
-**User Roles**:
+### Constants
 
 ```typescript
+// User Roles
 enum USER_ROLES_ENUM {
-    ADMIN = 'admin', // Full system access
-    PROJECT_ADMIN = 'project_admin', // Project-level admin
-    MEMBER = 'member', // Basic member access
+    ADMIN = 'admin',
+    PROJECT_ADMIN = 'project_admin',
+    MEMBER = 'member',
 }
 
-const AVAILABLE_USER_ROLES = Object.values(USER_ROLES_ENUM);
-// ['admin', 'project_admin', 'member']
-```
-
-**Task Status**:
-
-```typescript
+// Task Status
 enum TASK_STATUS_ENUM {
     TODO = 'todo',
     IN_PROGRESS = 'in_progress',
     DONE = 'done',
 }
-
-const AVAILABLE_TASK_STATUS = Object.values(TASK_STATUS_ENUM);
-// ['todo', 'in_progress', 'done']
 ```
 
-### Database Connection
-
-**MongoDB Integration**:
+### Database & App Setup
 
 ```typescript
-import connectDB from './db';
+// MongoDB Connection
+await connectDB(); // Auto-loads MONGODB_URI, exits on failure
 
-// Connect to MongoDB with error handling
-await connectDB();
-// Automatically loads MONGODB_URI from environment variables
-// Exits process on connection failure
-```
-
-### Application Configuration
-
-**Express Setup**:
-
-```typescript
-// CORS Configuration
-app.use(
-    cors({
-        origin: process.env.CORS_ORIGIN?.split(',') || 'http://localhost:5173',
-        credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization'],
-    }),
-);
-
-// Request parsing with size limits
+// Express Configuration
+app.use(cors({ origin: process.env.CORS_ORIGIN, credentials: true }));
 app.use(express.json({ limit: '16kb' }));
 app.use(express.urlencoded({ extended: true, limit: '16kb' }));
-
-// Static file serving
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 ```
 
 ## API Documentation
 
-**Available Endpoints:**
+### Available Endpoints
 
-- **Health Check**: `GET /` - Basic server status
-- **Test Endpoint**: `GET /instagram` - Development test endpoint
-- **Health Check API**: `GET /api/v1/healthcheck/` - Structured health check
+**General Endpoints:**
 
-**API Response Format**:
+- `GET /` - Basic server status
+- `GET /instagram` - Development test endpoint
+- `GET /api/v1/healthcheck/` - Structured health check
+
+**Authentication Endpoints (`/api/v1/auth/`):**
+
+**Public Routes:**
+
+- `POST /register` - User registration
+- `POST /login` - User login (email OR username + password)
+- `GET /verify-email/:verificationToken` - Verify email address
+- `POST /resend-verification` - Resend email verification
+- `POST /forgot-password` - Request password reset
+- `POST /reset-password/:resetToken` - Reset password with token
+- `POST /refresh-token` - Refresh access token
+
+**Protected Routes (require authentication):**
+
+- `POST /logout` - User logout
+- `GET /current-user` - Get current user profile
+- `POST /change-password` - Change user password
+
+### Request/Response Format
+
+**Success Response:**
 
 ```json
 {
@@ -542,7 +448,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 }
 ```
 
-**Error Response Format**:
+**Error Response:**
 
 ```json
 {
@@ -553,15 +459,36 @@ app.use(express.static(path.join(__dirname, 'public')));
 }
 ```
 
-**Planned API Structure:**
+### Authentication
 
-- **Authentication**: `/api/v1/auth/`
-- **Projects**: `/api/v1/projects/`
-- **Tasks**: `/api/v1/tasks/`
-- **Notes**: `/api/v1/notes/`
-- **Health Check**: `/api/v1/healthcheck/`
+**Login Request:**
 
-For detailed API specifications, see [PRD.md](./PRD.md).
+```json
+{
+    "email": "user@example.com", // OR
+    "username": "john_doe", // Either email or username required
+    "password": "your_password"
+}
+```
+
+**Register Request:**
+
+```json
+{
+    "username": "john_doe",
+    "email": "user@example.com",
+    "fullname": "John Doe",
+    "password": "secure_password"
+}
+```
+
+**Protected Route Headers:**
+
+```
+Authorization: Bearer <access_token>
+```
+
+OR use httpOnly cookies (automatically sent by browser).
 
 ## Security Best Practices
 

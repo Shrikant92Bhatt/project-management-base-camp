@@ -9,5 +9,8 @@
     "bracketSameLine": false,
     "arrowParens": "always",
     "endOfLine": "lf",
-    "jsxSingleQuote": true
+    "jsxSingleQuote": true,
+    "formatOnSave": true,
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
 }

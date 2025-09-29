@@ -33,10 +33,56 @@ const userRegisterValidator = () => {
 
 const userLoginValidator = () => {
     return [
-        body('email').trim().notEmpty().withMessage('Email is required').isEmail().withMessage('Invalid email address'),
-        body('username').trim().notEmpty().withMessage('Username is required').isLowercase().withMessage('Username must be in lowercase'),
+        body('email')
+            .trim()
+            .notEmpty()
+            .withMessage('Email is required')
+            .isEmail()
+            .withMessage('Invalid email address'),
+        body('username')
+            .trim()
+            .notEmpty()
+            .withMessage('Username is required')
+            .isLowercase()
+            .withMessage('Username must be in lowercase'),
         body('password').trim().notEmpty().withMessage('Password is required'),
     ];
 };
 
-export { userRegisterValidator, userLoginValidator };
+const changePasswordValidator = () => {
+    return [
+        body('currentPassword')
+            .trim()
+            .notEmpty()
+            .withMessage('Current password is required'),
+        body('newPassword')
+            .trim()
+            .notEmpty()
+            .withMessage('New password is required'),
+    ];
+};
+
+const userForgotPasswordValidator = () => {
+    return [
+        body('email')
+            .trim()
+            .notEmpty()
+            .withMessage('Email is required')
+            .isEmail()
+            .withMessage('Invalid email address'),
+    ];
+};
+
+const userResetPasswordValidator = () => {
+    return [
+        body('password').trim().notEmpty().withMessage('Password is required'),
+    ];
+};
+
+export {
+    userRegisterValidator,
+    userLoginValidator,
+    changePasswordValidator,
+    userForgotPasswordValidator,
+    userResetPasswordValidator,
+};
