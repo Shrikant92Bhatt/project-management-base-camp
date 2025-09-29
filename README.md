@@ -768,6 +768,7 @@ Authorization: Bearer <access_token>
 For detailed system architecture and design information, see:
 - **[System Design Document](./docs/DESIGN.md)** - High-Level Design (HLD) and Low-Level Design (LLD)
 - **[Version Management](./docs/VERSION_MANAGEMENT.md)** - Version control and release management
+- **[Changelog](./CHANGELOG.md)** - Project history and release notes
 
 ### Architecture Overview
 
